@@ -14,7 +14,7 @@ async function loadIPO() {
         // 優先載入 GitHub Actions 抓取的穩定資料
         let rawData = null;
         try {
-            const localRes = await fetch('data/ipo.json');
+            const localRes = await fetch('./data/ipo.json');
             if (localRes.ok) {
                 rawData = await localRes.json();
                 console.log('成功載入本地興櫃掛牌資料快照');
@@ -31,7 +31,7 @@ async function loadIPO() {
         // 嘗試載入績效資料
         let performanceMap = {};
         try {
-            const perfRes = await fetch('data/emerging-performance.json');
+            const perfRes = await fetch('./data/emerging-performance.json');
             if (perfRes.ok) {
                 performanceMap = await perfRes.json();
             }

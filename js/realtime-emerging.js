@@ -17,7 +17,7 @@ async function loadRealtimeEmerging() {
         // 嘗試讀取最新快照 (代表前一交易日)
         let prevMap = {};
         try {
-            const snapRes = await fetch('data/emerging-latest.json');
+            const snapRes = await fetch('./data/emerging-latest.json');
             if (snapRes.ok) {
                 const snapData = await snapRes.json();
                 snapData.forEach(item => {

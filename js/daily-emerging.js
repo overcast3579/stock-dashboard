@@ -16,8 +16,8 @@ async function loadDailyEmerging() {
     try {
         // 嘗試載入 GitHub Actions 生成的 JSON
         const [latestRes, prevRes] = await Promise.allSettled([
-            fetch('data/emerging-latest.json'),
-            fetch('data/emerging-prev.json'),
+            fetch('./data/emerging-latest.json'),
+            fetch('./data/emerging-prev.json'),
         ]);
         
         // 如果 latest JSON 不存在，顯示提示
