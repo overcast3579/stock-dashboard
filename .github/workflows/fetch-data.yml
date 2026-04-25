@@ -29,19 +29,24 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          cp data/emerging-latest.json data/emerging-prev.json
+          
+          # 建立昨日快照 (如果今天有抓到資料)
+          if [ -s data/emerging-latest.json ]; then
+            cp data/emerging-latest.json data/emerging-prev.json
+          fi
+          
           git add data/*.json
           git commit -m "📉 自動更新資料庫: $(date +'%Y-%m-%d %H:%M')" || echo "無變更"
           git push origin main
 
       - name: 設定 Pages
-        uses: actions/configure-pages@v3
+        uses: actions/configure-pages@v4
 
       - name: 上傳網頁檔案
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
 
       - name: 部署至 GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4
