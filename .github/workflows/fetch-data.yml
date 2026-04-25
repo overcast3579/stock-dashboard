@@ -1,41 +1,47 @@
-name: 每日抓取興櫃資料
+name: 每日抓取並更新網頁
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "30 06 * * 1-5" # 台灣時間 14:30
+    - cron: "30 07 * * 1-5" # 台灣時間 15:30
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
-  fetch-data:
+  fetch-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      
     steps:
       - name: 檢出代碼
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 建立 data 目錄
         run: mkdir -p data
 
-      - name: 抓取興櫃行情與掛牌進度
+      - name: 抓取最新報價與掛牌資料
         run: |
-          echo "=== 抓取即時統計 ==="
           curl -s -o data/emerging-latest.json "https://www.tpex.org.tw/openapi/v1/tpex_esb_latest_statistics"
-          
-          echo "=== 抓取掛牌公告 ==="
           curl -s -o data/ipo.json "https://www.tpex.org.tw/openapi/v1/tpex_esb_registration_announcements"
 
-      - name: 提交並推送資料
+      - name: 存回資料庫
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          
-          # 記錄昨日資料
-          if [ -f data/emerging-latest.json ]; then
-            cp data/emerging-latest.json data/emerging-prev.json
-          fi
-          
+          cp data/emerging-latest.json data/emerging-prev.json
           git add data/*.json
           git commit -m "📉 自動更新資料庫: $(date +'%Y-%m-%d %H:%M')" || echo "無變更"
           git push origin main
+
+      - name: 設定 Pages
+        uses: actions/configure-pages@v3
+
+      - name: 上傳網頁檔案
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: '.'
+
+      - name: 部署至 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
