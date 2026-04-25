@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="台股興櫃看盤工具 - 即時行情、ETF追蹤、即將上興櫃">
+    <title>台股看盤工具 | 興櫃總覽 · ETF追蹤</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-content">
+            <div class="logo">
+                <span class="logo-icon">📈</span>
+                <h1>台股看盤工具</h1>
+            </div>
+            <div class="header-meta">
+                <span id="header-date" class="header-date"></span>
+                <span class="header-badge">BETA</span>
+            </div>
+        </div>
+    </header>
+
+    <nav class="tab-nav" id="tab-nav">
+        <button class="tab-btn active" data-tab="realtime" id="tab-btn-realtime">
+            <span class="tab-icon">🔴</span>
+            <span class="tab-text">即時興櫃</span>
+        </button>
+        <button class="tab-btn" data-tab="daily" id="tab-btn-daily">
+            <span class="tab-icon">📊</span>
+            <span class="tab-text">每日統計</span>
+        </button>
+        <button class="tab-btn" data-tab="etf" id="tab-btn-etf">
+            <span class="tab-icon">💰</span>
+            <span class="tab-text">ETF 追蹤</span>
+        </button>
+        <button class="tab-btn" data-tab="ipo" id="tab-btn-ipo">
+            <span class="tab-icon">🆕</span>
+            <span class="tab-text">興櫃掛牌進度</span>
+        </button>
+    </nav>
+
+    <main class="main-content">
+        <!-- TAB 1: 即時興櫃 -->
+        <section class="tab-panel active" id="panel-realtime">
+            <div class="panel-header">
+                <div class="panel-title-row">
+                    <h2>即時興櫃行情</h2>
+                    <div class="panel-actions">
+                        <span id="realtime-count" class="stock-count"></span>
+                        <button id="realtime-refresh" class="btn-refresh" title="重新整理">
+                            <span class="refresh-icon">⟳</span> 重新整理
+                        </button>
+                    </div>
+                </div>
+                <p class="panel-subtitle">即時抓取 TPEx 興櫃報價 · <span id="realtime-update-time">尚未載入</span></p>
+            </div>
+
+            <div class="table-container" id="realtime-table-container">
+                <div class="loading-spinner" id="realtime-loading">
+                    <div class="spinner"></div>
+                    <p>正在載入即時資料...</p>
+                </div>
+                <div class="error-msg" id="realtime-error" style="display:none"></div>
+                <table class="stock-table" id="realtime-table" style="display:none">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="code">代號 <span class="sort-arrow"></span></th>
+                            <th class="sortable" data-sort="name">名稱 <span class="sort-arrow"></span></th>
+                            <th class="sortable" data-sort="price" class="num">收盤價 <span class="sort-arrow"></span></th>
+                            <th class="sortable" data-sort="change" class="num">漲跌 <span class="sort-arrow"></span></th>
+                            <th class="sortable" data-sort="changePercent" class="num">漲幅% <span class="sort-arrow"></span></th>
+                            <th class="sortable" data-sort="volume" class="num">成交量 <span class="sort-arrow"></span></th>
+                            <th class="num">量比昨日</th>
+                        </tr>
+                    </thead>
+                    <tbody id="realtime-tbody"></tbody>
+                </table>
+            </div>
+
+            <div class="filter-bar" id="realtime-filter">
+                <div class="filter-title">📋 篩選條件</div>
+                <div class="filter-inputs">
+                    <div class="filter-group">
+                        <label for="realtime-price-filter">價格漲幅 ≥</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="realtime-price-filter" placeholder="例: 5" step="0.1">
+                            <span class="input-suffix">%</span>
+                        </div>
+                    </div>
+                    <div class="filter-group disabled">
+                        <label for="realtime-volume-filter">成交量成長 ≥</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="realtime-volume-filter" placeholder="無昨日資料" disabled>
+                            <span class="input-suffix">%</span>
+                        </div>
+                        <span class="filter-note">需 GitHub Actions</span>
+                    </div>
+                </div>
+                <div class="filter-result" id="realtime-filter-result"></div>
+            </div>
+        </section>
+
+        <!-- TAB 2: 每日統計 -->
+        <section class="tab-panel" id="panel-daily">
+            <div class="panel-header">
+                <div class="panel-title-row">
+                    <h2>每日興櫃統計</h2>
+                    <div class="panel-actions">
+                        <span id="daily-count" class="stock-count"></span>
+                    </div>
+                </div>
+                <p class="panel-subtitle">GitHub Actions 每日自動抓取 · <span id="daily-update-time">尚未載入</span></p>
+            </div>
+
+            <div class="table-container" id="daily-table-container">
+                <div class="loading-spinner" id="daily-loading">
+                    <div class="spinner"></div>
+                    <p>正在載入每日資料...</p>
+                </div>
+                <div class="error-msg" id="daily-error" style="display:none"></div>
+                <div class="info-msg" id="daily-info" style="display:none">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>尚未設定 GitHub Actions</h3>
+                    <p>請先將專案推上 GitHub 並啟用 Actions，即可自動產生每日統計資料。</p>
+                    <p>推上去之後，每天收盤後 (14:30) 會自動抓取資料。</p>
+                </div>
+                <table class="stock-table" id="daily-table" style="display:none">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="code">代號 <span class="sort-arrow"></span></th>
+                            <th class="sortable" data-sort="name">名稱 <span class="sort-arrow"></span></th>
+                            <th class="sortable" data-sort="price" class="num">收盤價 <span class="sort-arrow"></span></th>
+                            <th class="sortable" data-sort="change" class="num">漲跌 <span class="sort-arrow"></span></th>
+                            <th class="sortable" data-sort="changePercent" class="num">漲幅% <span class="sort-arrow"></span></th>
+                            <th class="sortable" data-sort="volume" class="num">成交量 <span class="sort-arrow"></span></th>
+                            <th class="sortable" data-sort="volumeChange" class="num">量比昨日% <span class="sort-arrow"></span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="daily-tbody"></tbody>
+                </table>
+            </div>
+
+            <div class="filter-bar" id="daily-filter" style="display:none">
+                <div class="filter-title">📋 篩選條件</div>
+                <div class="filter-inputs">
+                    <div class="filter-group">
+                        <label for="daily-price-filter">價格漲幅 ≥</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="daily-price-filter" placeholder="例: 5" step="0.1">
+                            <span class="input-suffix">%</span>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label for="daily-volume-filter">成交量成長 ≥</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="daily-volume-filter" placeholder="例: 150" step="1">
+                            <span class="input-suffix">%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="filter-result" id="daily-filter-result"></div>
+            </div>
+        </section>
+
+        <!-- TAB 3: ETF 追蹤 -->
+        <section class="tab-panel" id="panel-etf">
+            <div class="panel-header">
+                <div class="panel-title-row">
+                    <h2>熱門 ETF 追蹤</h2>
+                    <div class="panel-actions">
+                        <button id="etf-refresh" class="btn-refresh" title="重新整理">
+                            <span class="refresh-icon">⟳</span> 重新整理
+                        </button>
+                    </div>
+                </div>
+                <p class="panel-subtitle">20 檔精選台灣熱門 ETF · <span id="etf-update-time">尚未載入</span></p>
+            </div>
+
+            <div class="table-container" id="etf-table-container">
+                <div class="loading-spinner" id="etf-loading">
+                    <div class="spinner"></div>
+                    <p>正在載入 ETF 資料...</p>
+                </div>
+                <div class="error-msg" id="etf-error" style="display:none"></div>
+                <table class="stock-table" id="etf-table" style="display:none">
+                    <thead>
+                        <tr>
+                            <th>代號</th>
+                            <th>名稱</th>
+                            <th>類型</th>
+                            <th class="num">收盤價</th>
+                            <th class="num">漲跌</th>
+                            <th class="num">漲幅%</th>
+                        </tr>
+                    </thead>
+                    <tbody id="etf-tbody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- TAB 4: 即將上櫃 -->
+        <section class="tab-panel" id="panel-ipo">
+            <div class="panel-header">
+                <div class="panel-title-row">
+                    <h2>興櫃掛牌進度</h2>
+                    <div class="panel-actions">
+                        <button id="ipo-refresh" class="btn-refresh" title="重新整理">
+                            <span class="refresh-icon">⟳</span> 重新整理
+                        </button>
+                    </div>
+                </div>
+                <p class="panel-subtitle">興櫃公司登錄申請與掛牌日期 · <span id="ipo-update-time">尚未載入</span></p>
+            </div>
+
+            <div class="table-container" id="ipo-table-container">
+                <div class="loading-spinner" id="ipo-loading">
+                    <div class="spinner"></div>
+                    <p>正在載入申請資料...</p>
+                </div>
+                <div class="error-msg" id="ipo-error" style="display:none"></div>
+                <table class="stock-table" id="ipo-table" style="display:none">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">代號</th>
+                            <th rowspan="2">名稱</th>
+                            <th rowspan="2">掛牌日期</th>
+                            <th rowspan="2">承銷價</th>
+                            <th colspan="3" style="text-align:center; background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--border-subtle);">首日績效</th>
+                            <th colspan="4" style="text-align:center; background: rgba(255,255,255,0.1); border-bottom: 1px solid var(--border-subtle);">次日績效</th>
+                        </tr>
+                        <tr>
+                            <th class="num">最高</th>
+                            <th class="num">收盤</th>
+                            <th class="num">均價</th>
+                            <th class="num">開盤</th>
+                            <th class="num">最高</th>
+                            <th class="num">收盤</th>
+                            <th class="num">均價</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ipo-tbody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        <p>資料來源：<a href="https://www.tpex.org.tw" target="_blank" rel="noopener">櫃買中心 TPEx</a> · <a href="https://www.twse.com.tw" target="_blank" rel="noopener">證交所 TWSE</a></p>
+        <p>⚠️ 本工具僅供個人參考，不構成投資建議</p>
+    </footer>
+
+    <script src="js/app.js"></script>
+    <script src="js/realtime-emerging.js"></script>
+    <script src="js/daily-emerging.js"></script>
+    <script src="js/etf.js"></script>
+    <script src="js/ipo.js"></script>
+</body>
+</html>

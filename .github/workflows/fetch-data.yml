@@ -1,0 +1,80 @@
+name: 每日抓取興櫃資料
+
+on:
+  schedule:
+    # 每日台灣時間 14:30 (UTC 06:30) 抓取收盤資料
+    - cron: '30 6 * * 1-5'
+  workflow_dispatch: # 手動觸發
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 抓取興櫃最新統計
+        run: |
+          mkdir -p data
+
+          echo "=== 抓取興櫃股票資料 ==="
+          
+          # 如果已有 latest，先備份為 prev
+          if [ -f data/emerging-latest.json ]; then
+            cp data/emerging-latest.json data/emerging-prev.json
+            echo "已備份前日資料"
+          fi
+
+          # 抓取最新資料
+          curl -s -o data/emerging-latest.json \
+            "https://www.tpex.org.tw/openapi/v1/tpex_esb_latest_statistics"
+          
+          # 驗證 JSON 是否有效
+          if ! python3 -c "import json; json.load(open('data/emerging-latest.json'))" 2>/dev/null; then
+            echo "❌ 興櫃資料 JSON 格式錯誤"
+            # 恢復備份
+            if [ -f data/emerging-prev.json ]; then
+              cp data/emerging-prev.json data/emerging-latest.json
+            fi
+            exit 1
+          fi
+
+          EMERGING_COUNT=$(python3 -c "import json; data=json.load(open('data/emerging-latest.json')); print(len(data))")
+          echo "✅ 興櫃股票：${EMERGING_COUNT} 檔"
+
+      - name: 抓取興櫃掛牌進度 (原本的 IPO 名稱)
+        run: |
+          echo "=== 抓取興櫃掛牌資料 ==="
+          curl -s -o data/ipo.json \
+            "https://www.tpex.org.tw/openapi/v1/tpex_esb_registration_announcements"
+          
+          if python3 -c "import json; json.load(open('data/ipo.json'))" 2>/dev/null; then
+            IPO_COUNT=$(python3 -c "import json; data=json.load(open('data/ipo.json')); print(len(data))")
+            echo "✅ 興櫃掛牌資料：${IPO_COUNT} 筆"
+          else
+            echo "⚠️ 資料格式錯誤，跳過"
+          fi
+
+      - name: 記錄抓取時間
+        run: |
+          echo "{\"fetchedAt\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\", \"fetchedAtTW\": \"$(TZ=Asia/Taipei date +%Y/%m/%d\ %H:%M:%S)\"}" > data/meta.json
+          echo "✅ 記錄完成：$(cat data/meta.json)"
+
+      - name: Commit 並推送資料
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add data/
+          
+          # 檢查是否有變更
+          if git diff --staged --quiet; then
+            echo "📌 沒有資料變更，跳過"
+          else
+            git commit -m "📊 每日資料更新 $(TZ=Asia/Taipei date +%Y/%m/%d)"
+            git push
+            echo "✅ 資料已推送"
+          fi
